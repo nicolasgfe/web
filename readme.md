@@ -1,0 +1,1 @@
+utilização de zustand para trabalhar com estados -> no lugar do useReduce do react

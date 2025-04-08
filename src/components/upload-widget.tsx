@@ -6,7 +6,7 @@ import { motion, useCycle } from "motion/react"
 import { UploadWidgetMinimizeButton } from "./upload-widget-minimized-button";
 
 export function UploadWidget() {
-	const isThereAnyPendingUpload = true
+	const isThereAnyPendingUpload = false
 	const [isWidgetOpen, toggleWidgetOpen] = useCycle(false, true)
 
 	return (
