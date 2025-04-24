@@ -17,7 +17,9 @@ export function UploadWidgetUploadItem({
 	const cancelUpload = useUploads(store => store.cancelUpload)
 
 	const progress = Math.min(
-		Math.round((upload.uploadSizeInBytes * 100) / upload.originalSizeInBytes),
+		upload.compressedSizeBytes
+			? Math.round((upload.uploadSizeInBytes * 100) / upload.compressedSizeBytes)
+			: 0,
 		100
 	)
 
@@ -38,10 +40,12 @@ export function UploadWidgetUploadItem({
 					<span className="line-through">{formatBytes(upload.originalSizeInBytes)}</span>
 					<div className="size-1 rounded-full bg-zinc-700" />
 					<span>
-						300KB
-						<span className="text-green-400 ml-1">
-							-94%
-						</span>
+						{formatBytes(upload.compressedSizeBytes ?? 0)}
+						{upload.compressedSizeBytes && (
+							<span className="text-green-400 ml-1">
+								-{Math.round((upload.originalSizeInBytes - upload.compressedSizeBytes) * 100 / upload.originalSizeInBytes)}%
+							</span>
+						)}
 					</span>
 					<div className="size-1 rounded-full bg-zinc-700" />
 					{upload.status === "success" && <span>100%</span>}
@@ -64,16 +68,20 @@ export function UploadWidgetUploadItem({
 
 			<div className="absolute top-2.5 right-2.5 flex items-center gap-1">
 				<Button
-					disabled={upload.status !== "success"}
+					aria-disabled={upload.status !== "success"}
 					size="icon-sm"
+					asChild
 				>
-					<Download className="size-4" strokeWidth={1.5} />
-					<span className="sr-only">Download compress image</span>
+					<a href={upload.remoteUrl}>
+						<Download className="size-4" strokeWidth={1.5} />
+						<span className="sr-only">Download compress image</span>
+					</a>
 				</Button>
 
 				<Button
-					disabled={upload.status !== "success"}
+					disabled={!upload.remoteUrl}
 					size="icon-sm"
+					onClick={() => upload.remoteUrl && navigator.clipboard.writeText(upload.remoteUrl)}
 				>
 					<Link2 className="size-4" strokeWidth={1.5} />
 					<span className="sr-only">Copy remote URL</span>

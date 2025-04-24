@@ -4,6 +4,7 @@ import { immer } from "zustand/middleware/immer"
 import { uploadFileToStorage } from "../http/upload-file-to-storage";
 import { CanceledError } from "axios";
 import { useShallow } from "zustand/shallow";
+import { compressImage } from "../utils/compress-image";
 
 export type Upload = {
 	name: string
@@ -11,7 +12,9 @@ export type Upload = {
 	abortController: AbortController
 	status: 'progress' | 'success' | "error" | "canceled"
 	originalSizeInBytes: number
+	compressedSizeBytes?: number
 	uploadSizeInBytes: number
+	remoteUrl?: string
 }
 
 type UploadState = {
@@ -48,9 +51,18 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
 			}
 
 			try {
-				await uploadFileToStorage(
+				const compressFile = await compressImage({
+					file: upload.file,
+					maxHeight: 1000,
+					maxWidth: 1000,
+					quality: 0.8
+				});
+
+				updatedUpload(uploadId, { compressedSizeBytes: compressFile.size })
+
+				const {url} = await uploadFileToStorage(
 					{
-						file: upload.file,
+						file: compressFile,
 						onProgress(sizeInBytes) {
 							updatedUpload(uploadId, { uploadSizeInBytes: sizeInBytes })
 						}
@@ -58,7 +70,7 @@ export const useUploads = create<UploadState, [['zustand/immer', never]]>(
 					{ signal: upload.abortController.signal }
 				)
 
-				updatedUpload(uploadId, { status: "success" })
+				updatedUpload(uploadId, { status: "success", remoteUrl: url})
 
 			} catch (err) {
 				if (err instanceof CanceledError) {
@@ -123,8 +135,12 @@ export const usePendingUploads = () => {
 			uploaded
 		} = Array.from(store.uploads.values()).reduce(
 			(acc, upload) => {
-				acc.total += upload.originalSizeInBytes
-				acc.uploaded += upload.uploadSizeInBytes
+
+				if (upload.compressedSizeBytes) {
+					acc.uploaded += upload.uploadSizeInBytes
+				}
+				
+				acc.total += upload.compressedSizeBytes || upload.originalSizeInBytes
 
 				return acc
 			},
