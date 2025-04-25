@@ -1,5 +1,6 @@
 import { useUploads } from "../store/uploads";
 import { UploadWidgetUploadItem } from "./upload-widget-upload-item";
+import { ScrollArea } from "radix-ui";
 
 export function UploadWidgetUploadList() {
 	const uploads = useUploads(store => store.uploads)
@@ -12,16 +13,27 @@ export function UploadWidgetUploadList() {
 				Uploaded files{' '}
 				<span className="text-zinc-400">{uploads.size}</span>
 			</span>
-			{isUploadListEmpty ? (
-				<span className="text-xs text-zinc-400">No Uploads added</span>
-			) : (
-				<div className="flex flex-col gap-2">
-					{Array.from(uploads.entries()).map(([uploadId, upload]) => {
-						return <UploadWidgetUploadItem key={uploadId} upload={upload} uploadId={uploadId}/>
-					})}
-				</div>
-			)}
 
+			<ScrollArea.Root type="scroll" className="overflow-hidden">
+				<ScrollArea.Viewport className="h-[200px]">
+					{isUploadListEmpty ? (
+						<span className="text-xs text-zinc-400">No Uploads added</span>
+					) : (
+						<div className="flex flex-col gap-2">
+							{Array.from(uploads.entries()).map(([uploadId, upload]) => {
+								return <UploadWidgetUploadItem key={uploadId} upload={upload} uploadId={uploadId} />
+							})}
+						</div>
+					)}
+				</ScrollArea.Viewport>
+				<ScrollArea.Scrollbar
+					className="flex touch-none select-none bg-zing-400 p-0.5 transition-colors duration-[160ms] ease-out data-[orientation=horizontal]:h-2.5 data-[orientation=vertical]:w-2.5 data-[orientation=horizontal]:flex-col"
+					orientation="vertical"
+				>
+					<ScrollArea.Thumb className="relative flex-1 rounded-[10px] bg-zinc-800 before:absolute before:left-1/2 before:top-1/2 before:size-full before:min-h-11 before:min-w-11 before:-translate-x-1/2 before:-translate-y-1/2" />
+				</ScrollArea.Scrollbar>
+
+			</ScrollArea.Root>
 		</div>
 	)
 }
